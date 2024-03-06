@@ -19,7 +19,7 @@ class WeatherRepository {
         throw 'An unexpected error occurred';
       }
 
-      return WeatherModel.fromMap(data);
+      return data;
     } catch (e) {
       throw e.toString();
     }
