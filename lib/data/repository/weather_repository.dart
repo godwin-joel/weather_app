@@ -8,18 +8,13 @@ class WeatherRepository {
   final WeatherDataProvider weatherDataProvider;
   WeatherRepository(this.weatherDataProvider);
 
-  Future<WeatherModel> getCurrentWeather() async {
+  Future<WeatherModel> getCurrentWeather(String city) async {
     try {
-      String cityName = 'New Delhi';
-      final weatherData = await weatherDataProvider.getCurrentWeather(cityName);
+      final response = await weatherDataProvider.getCurrentWeather(city);
+      final data = jsonDecode(response);
 
-      final data = jsonDecode(weatherData);
-
-      if (data['cod'] != '200') {
-        throw 'An unexpected error occurred';
-      }
-
-      return data;
+      final weatherData = WeatherModel.fromJson(data);
+      return weatherData;
     } catch (e) {
       throw e.toString();
     }

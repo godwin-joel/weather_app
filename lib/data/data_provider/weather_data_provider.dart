@@ -6,11 +6,14 @@ class WeatherDataProvider {
     try {
       final res = await http.get(
         Uri.parse(
-          'https://api.openweathermap.org/data/2.5/forecast?q=$cityName&APPID=$weatherAPIKey',
+          'https://api.weatherapi.com/v1/forecast.json?key=$weatherAPIKey&q=$cityName&days=1&aqi=no&alerts=no',
         ),
       );
-
-      return res.body;
+      if (res.statusCode == 200) {
+        return res.body;
+      } else {
+        throw res.statusCode;
+      }
     } catch (e) {
       throw e.toString();
     }

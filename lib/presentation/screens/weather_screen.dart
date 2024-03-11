@@ -1,8 +1,8 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:weather_app/bloc/weather_bloc.dart';
-import 'package:weather_app/presentation/widgets/additional_info_item.dart';
+import 'package:weather_app/presentation/screens/weather_details_screen.dart';
 
 class WeatherScreen extends StatefulWidget {
   const WeatherScreen({super.key});
@@ -12,172 +12,240 @@ class WeatherScreen extends StatefulWidget {
 }
 
 class _WeatherScreenState extends State<WeatherScreen> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<WeatherBloc>().add(WeatherFetched());
-  }
+  static const List<String> majorCities = [
+    'Chennai',
+    'Mumbai',
+    'Kolkata',
+    'Pune',
+    'Bengaluru',
+    'Hyderabad',
+    'Jaipur',
+    'Indore',
+    'Lucknow',
+    'Kochi',
+  ];
+  TextEditingController searchTextController = TextEditingController();
+  String selectedCity = '';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text(
-          'Weather App',
+          'Weather',
           style: TextStyle(
             fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            onPressed: () {
-              context.read<WeatherBloc>().add(WeatherFetched());
-            },
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
       ),
-      body: BlocBuilder<WeatherBloc, WeatherState>(
+      body: BlocConsumer<WeatherBloc, WeatherState>(
+        listener: (context, state) {
+          if (state is WeatherSuccess) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => WeatherDetailsScreen(city: selectedCity),
+              ),
+            );
+          }
+        },
         builder: (context, state) {
+          if (state is WeatherLoading) {
+            return Center(
+              child: Image.asset('assets/loader.gif'),
+            );
+          }
           if (state is WeatherFailure) {
             return Center(
-              child: Text(state.error),
-            );
-          }
-
-          if (state is! WeatherSuccess) {
-            return const Center(
-              child: CircularProgressIndicator.adaptive(),
-            );
-          }
-
-          final data = state.weatherModel;
-
-          // final currentTemp = data.currentTemp;
-          // final currentSky = data.currentSky;
-          // final currentPressure = data.currentPressure;
-          // final currentWindSpeed = data.currentWindSpeed;
-          // final currentHumidity = data.currentHumidity;
-
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // main card
-                SizedBox(
-                  width: double.infinity,
-                  child: Card(
-                    elevation: 10,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(height: MediaQuery.of(context).size.height * .2),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * .25,
+                    width: MediaQuery.of(context).size.height * .25,
+                    child: Image.asset('assets/error.png'),
+                  ),
+                  const Text("We couldn't find any results!"),
+                  const Text('Try again with a different city.'),
+                  SizedBox(height: MediaQuery.of(context).size.height * .05),
+                  IconButton(
+                    onPressed: () {
+                      context.read<WeatherBloc>().add(WeatherReset());
+                    },
+                    icon: const Icon(
+                      Icons.refresh,
+                      size: 40,
                     ),
-                    // child: ClipRRect(
-                    //   borderRadius: BorderRadius.circular(16),
-                    //   child: BackdropFilter(
-                    //     filter: ImageFilter.blur(
-                    //       sigmaX: 10,
-                    //       sigmaY: 10,
-                    //     ),
-                    //     child: Padding(
-                    //       padding: const EdgeInsets.all(16.0),
-                    //       child: Column(
-                    //         children: [
-                    //           Text(
-                    //             '$currentTemp K',
-                    //             style: const TextStyle(
-                    //               fontSize: 32,
-                    //               fontWeight: FontWeight.bold,
-                    //             ),
-                    //           ),
-                    //           const SizedBox(height: 16),
-                    //           Icon(
-                    //             currentSky == 'Clouds' || currentSky == 'Rain'
-                    //                 ? Icons.cloud
-                    //                 : Icons.sunny,
-                    //             size: 64,
-                    //           ),
-                    //           const SizedBox(height: 16),
-                    //           Text(
-                    //             currentSky,
-                    //             style: const TextStyle(
-                    //               fontSize: 20,
-                    //             ),
-                    //           ),
-                    //         ],
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
                   ),
+                ],
+              ),
+            );
+          }
+          return OrientationBuilder(
+            builder: (context, orientation) {
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if ((orientation == Orientation.portrait))
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * .3,
+                        child: Center(
+                          child: Image.asset('assets/weather_app_logo.gif'),
+                        ),
+                      ),
+                    if (orientation == Orientation.portrait)
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * .1,
+                      ),
+                    Autocomplete<String>(
+                      fieldViewBuilder: (BuildContext context,
+                          searchTextController,
+                          FocusNode focusNode,
+                          VoidCallback onFieldSubmitted) {
+                        return Container(
+                          width: MediaQuery.of(context).size.width * .9,
+                          margin: EdgeInsets.only(
+                              bottom:
+                                  orientation == Orientation.portrait ? 10 : 0),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(.1),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              top:
+                                  orientation == Orientation.portrait ? 8.0 : 0,
+                              bottom:
+                                  orientation == Orientation.portrait ? 8.0 : 0,
+                              left: 20,
+                              right: 8,
+                            ),
+                            child: TextFormField(
+                              cursorColor: Colors.white,
+                              decoration: InputDecoration(
+                                focusedBorder: InputBorder.none,
+                                border: InputBorder.none,
+                                hintText: 'City name',
+                                hintStyle: TextStyle(
+                                    color: Colors.white.withOpacity(.3)),
+                                suffixIcon: IconButton(
+                                  onPressed: () {
+                                    if (searchTextController.text.isNotEmpty) {
+                                      selectedCity = searchTextController.text
+                                          .toUpperCase();
+                                      context.read<WeatherBloc>().add(
+                                          WeatherFetched(
+                                              searchTextController.text));
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content:
+                                              Text('Enter city name to search'),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  icon: const Icon(
+                                    Icons.search,
+                                    color: Color(0xff006ee6),
+                                  ),
+                                ),
+                              ),
+                              controller: searchTextController,
+                              focusNode: focusNode,
+                            ),
+                          ),
+                        );
+                      },
+                      optionsBuilder: (TextEditingValue textEditingValue) {
+                        if (textEditingValue.text == '') {
+                          return const Iterable<String>.empty();
+                        }
+                        return majorCities.where((String option) {
+                          return option
+                              .toLowerCase()
+                              .contains(textEditingValue.text.toLowerCase());
+                        });
+                      },
+                      optionsViewBuilder: (context, onSelected, options) =>
+                          Align(
+                        alignment: Alignment.topLeft,
+                        child: Material(
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(
+                                bottom: Radius.circular(4.0)),
+                          ),
+                          child: Container(
+                              //   height: 52.0 * options.length,
+                              width: MediaQuery.of(context).size.width * .9,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                color: Colors.white.withOpacity(.1),
+                              ),
+                              child: ListView.separated(
+                                itemBuilder: (cintext, index) {
+                                  final String option =
+                                      options.elementAt(index);
+                                  return InkWell(
+                                    onTap: () => onSelected(option),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(20.0),
+                                      child: Text(option),
+                                    ),
+                                  );
+                                },
+                                separatorBuilder: (context, index) {
+                                  return const Divider(
+                                    indent: 20,
+                                    endIndent: 20,
+                                  );
+                                },
+                                itemCount: options.length,
+                                padding: EdgeInsets.zero,
+                                shrinkWrap: true,
+                              )),
+                        ),
+                      ),
+                      onSelected: (String selection) {
+                        selectedCity = selection.toUpperCase();
+                        context
+                            .read<WeatherBloc>()
+                            .add(WeatherFetched(selection));
+                      },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Hourly Forecast',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // SizedBox(
-                //   height: 120,
-                //   child: ListView.builder(
-                //     itemCount: 5,
-                //     scrollDirection: Axis.horizontal,
-                //     itemBuilder: (context, index) {
-                //       final hourlyForecast = data['list'][index + 1];
-                //       final hourlySky =
-                //           data['list'][index + 1]['weather'][0]['main'];
-                //       final hourlyTemp =
-                //           hourlyForecast['main']['temp'].toString();
-                //       final time = DateTime.parse(hourlyForecast['dt_txt']);
-                //       return HourlyForecastItem(
-                //         time: DateFormat.j().format(time),
-                //         temperature: hourlyTemp,
-                //         icon: hourlySky == 'Clouds' || hourlySky == 'Rain'
-                //             ? Icons.cloud
-                //             : Icons.sunny,
-                //       );
-                //     },
-                //   ),
-                // ),
-
-                const SizedBox(height: 20),
-                const Text(
-                  'Additional Information',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.spaceAround,
-                //   children: [
-                //     AdditionalInfoItem(
-                //       icon: Icons.water_drop,
-                //       label: 'Humidity',
-                //       value: currentHumidity.toString(),
-                //     ),
-                //     AdditionalInfoItem(
-                //       icon: Icons.air,
-                //       label: 'Wind Speed',
-                //       value: currentWindSpeed.toString(),
-                //     ),
-                //     AdditionalInfoItem(
-                //       icon: Icons.beach_access,
-                //       label: 'Pressure',
-                //       value: currentPressure.toString(),
-                //     ),
-                //   ],
-                // ),
-              ],
-            ),
+              );
+            },
           );
         },
       ),
+
+      // body: BlocBuilder<WeatherBloc, WeatherState>(
+      //   builder: (context, state) {
+      //     // if (state is WeatherFailure) {
+      //     //   return Center(
+      //     //     child: Text(state.error),
+      //     //   );
+      //     // }
+
+      //     // if (state is! WeatherSuccess) {
+      //     //   return const Center(
+      //     //     child: CircularProgressIndicator.adaptive(),
+      //     //   );
+      //     // }
+
+      //     // if (state is WeatherInitial) {
+      //     //   return
+      //     // }
+
+      // final data = state.weatherModel;
     );
   }
 }

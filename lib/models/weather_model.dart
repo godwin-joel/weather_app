@@ -35,7 +35,7 @@ class WeatherModel {
 
 class Current {
   String lastUpdated;
-  int tempC;
+  double tempC;
   double tempF;
   int isDay;
   Condition condition;
@@ -43,6 +43,7 @@ class Current {
   double windKph;
   String windDir;
   int humidity;
+  double uv;
 
   Current({
     required this.lastUpdated,
@@ -54,18 +55,20 @@ class Current {
     required this.windKph,
     required this.windDir,
     required this.humidity,
+    required this.uv,
   });
 
   factory Current.fromJson(Map<String, dynamic> json) => Current(
         lastUpdated: json["last_updated"],
         tempC: json["temp_c"],
-        tempF: json["temp_f"]?.toDouble(),
+        tempF: json["temp_f"],
         isDay: json["is_day"],
         condition: Condition.fromJson(json["condition"]),
-        windMph: json["wind_mph"]?.toDouble(),
-        windKph: json["wind_kph"]?.toDouble(),
+        windMph: json["wind_mph"],
+        windKph: json["wind_kph"],
         windDir: json["wind_dir"],
         humidity: json["humidity"],
+        uv: json["uv"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -78,25 +81,30 @@ class Current {
         "wind_kph": windKph,
         "wind_dir": windDir,
         "humidity": humidity,
+        "uv": uv,
       };
 }
 
 class Condition {
   String text;
+  String icon;
   int code;
 
   Condition({
     required this.text,
+    required this.icon,
     required this.code,
   });
 
   factory Condition.fromJson(Map<String, dynamic> json) => Condition(
-        text: json["text"]!,
+        text: json["text"],
+        icon: json["icon"],
         code: json["code"],
       );
 
   Map<String, dynamic> toJson() => {
         "text": text,
+        "icon": icon,
         "code": code,
       };
 }
@@ -119,7 +127,7 @@ class Forecast {
 }
 
 class Forecastday {
-  DateTime date;
+  String date;
   Day day;
   Astro astro;
   List<Hour> hour;
@@ -132,15 +140,14 @@ class Forecastday {
   });
 
   factory Forecastday.fromJson(Map<String, dynamic> json) => Forecastday(
-        date: DateTime.parse(json["date"]),
+        date: json["date"],
         day: Day.fromJson(json["day"]),
         astro: Astro.fromJson(json["astro"]),
         hour: List<Hour>.from(json["hour"].map((x) => Hour.fromJson(x))),
       );
 
   Map<String, dynamic> toJson() => {
-        "date":
-            "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}",
+        "date": date,
         "day": day.toJson(),
         "astro": astro.toJson(),
         "hour": List<dynamic>.from(hour.map((x) => x.toJson())),
@@ -185,13 +192,13 @@ class Day {
   double mintempC;
   double mintempF;
   double avgtempC;
-  int avgtempF;
+  double avgtempF;
   double maxwindMph;
-  int maxwindKph;
+  double maxwindKph;
   int avghumidity;
   int dailyChanceOfRain;
   Condition condition;
-  int uv;
+  double uv;
 
   Day({
     required this.maxtempC,
@@ -209,13 +216,13 @@ class Day {
   });
 
   factory Day.fromJson(Map<String, dynamic> json) => Day(
-        maxtempC: json["maxtemp_c"]?.toDouble(),
-        maxtempF: json["maxtemp_f"]?.toDouble(),
-        mintempC: json["mintemp_c"]?.toDouble(),
-        mintempF: json["mintemp_f"]?.toDouble(),
-        avgtempC: json["avgtemp_c"]?.toDouble(),
+        maxtempC: json["maxtemp_c"],
+        maxtempF: json["maxtemp_f"],
+        mintempC: json["mintemp_c"],
+        mintempF: json["mintemp_f"],
+        avgtempC: json["avgtemp_c"],
         avgtempF: json["avgtemp_f"],
-        maxwindMph: json["maxwind_mph"]?.toDouble(),
+        maxwindMph: json["maxwind_mph"],
         maxwindKph: json["maxwind_kph"],
         avghumidity: json["avghumidity"],
         dailyChanceOfRain: json["daily_chance_of_rain"],
@@ -251,7 +258,7 @@ class Hour {
   int humidity;
   int cloud;
   int chanceOfRain;
-  int uv;
+  double uv;
 
   Hour({
     required this.time,
@@ -270,12 +277,12 @@ class Hour {
 
   factory Hour.fromJson(Map<String, dynamic> json) => Hour(
         time: json["time"],
-        tempC: json["temp_c"]?.toDouble(),
-        tempF: json["temp_f"]?.toDouble(),
+        tempC: json["temp_c"],
+        tempF: json["temp_f"],
         isDay: json["is_day"],
         condition: Condition.fromJson(json["condition"]),
-        windMph: json["wind_mph"]?.toDouble(),
-        windKph: json["wind_kph"]?.toDouble(),
+        windMph: json["wind_mph"],
+        windKph: json["wind_kph"],
         windDir: json["wind_dir"],
         humidity: json["humidity"],
         cloud: json["cloud"],
@@ -303,20 +310,14 @@ class Location {
   String name;
   String region;
   String country;
-  double lat;
-  double lon;
   String tzId;
-  int localtimeEpoch;
   String localtime;
 
   Location({
     required this.name,
     required this.region,
     required this.country,
-    required this.lat,
-    required this.lon,
     required this.tzId,
-    required this.localtimeEpoch,
     required this.localtime,
   });
 
@@ -324,10 +325,7 @@ class Location {
         name: json["name"],
         region: json["region"],
         country: json["country"],
-        lat: json["lat"]?.toDouble(),
-        lon: json["lon"]?.toDouble(),
         tzId: json["tz_id"],
-        localtimeEpoch: json["localtime_epoch"],
         localtime: json["localtime"],
       );
 
@@ -335,10 +333,7 @@ class Location {
         "name": name,
         "region": region,
         "country": country,
-        "lat": lat,
-        "lon": lon,
         "tz_id": tzId,
-        "localtime_epoch": localtimeEpoch,
         "localtime": localtime,
       };
 }
